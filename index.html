@@ -1,0 +1,1839 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Mesada XP (V7 Mobile)</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#131a33; --card2:#0f1630; --line:#22305f;
+      --txt:#e9ecff; --mut:rgba(233,236,255,.75);
+      --good:#123a2b; --goodLine:#1f6a4d;
+      --bad:#3a1430; --badLine:#6a2453;
+      --btn:#1a2450; --btnLine:#2b3a76;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color-scheme: dark;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; background:var(--bg); color:var(--txt); }
+    .wrap{ max-width:1100px; margin:0 auto; padding:16px 14px 86px; }
+    @media (min-width: 980px){
+      .wrap{ padding-bottom:16px; }
+    }
+
+    /* Typography: mobile-first, bigger and readable */
+    h2{ margin:0 0 10px; font-size:clamp(16px, 2.2vw, 18px); }
+    .muted{ opacity:.78; font-size:clamp(13px, 1.9vw, 14px); }
+    .big{ font-size:clamp(26px, 4.2vw, 34px); font-weight:900; letter-spacing:.2px; line-height:1.05; }
+
+    .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; box-shadow:0 8px 20px rgba(0,0,0,.25); }
+    .hr{ height:1px; background:var(--line); margin:12px 0; opacity:.9; }
+    .row{ display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
+
+    .btn{
+      cursor:pointer; border:1px solid var(--btnLine); background:var(--btn); color:var(--txt);
+      border-radius:14px; padding:12px 14px; font-weight:800;
+      font-size:clamp(14px, 2vw, 15px);
+      touch-action:manipulation;
+    }
+    .btn:hover{ filter:brightness(1.08); }
+    .btn:active{ transform:translateY(1px); }
+    .btn.good{ background:var(--good); border-color:var(--goodLine); }
+    .btn.danger{ background:var(--bad); border-color:var(--badLine); }
+    .btn.gray{ background:transparent; border-color:var(--line); }
+    .btn.small{ padding:10px 12px; border-radius:12px; font-weight:800; }
+
+    input[type="text"], input[type="number"]{
+      width:100%; padding:12px 12px; border-radius:14px; border:1px solid var(--line);
+      background:var(--bg); color:var(--txt); outline:none;
+      font-size:16px; /* evita zoom automático no iOS */
+    }
+    label{ font-size:13px; opacity:.85; display:block; margin-bottom:6px; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono"; font-size:12px; }
+
+    /* Pages (mobile): show one section at a time */
+    .page{ display:none; }
+    .page.active{ display:block; }
+    @media (min-width: 980px){
+      .pagesDesktop{ display:grid; grid-template-columns: 1.6fr 1fr; gap:14px; margin-top:14px; }
+      .page{ display:block; }
+      .page.active{ display:block; }
+      .desktopHide{ display:none !important; }
+    }
+
+    /* Tasks */
+    .tasks{ display:flex; flex-direction:column; gap:12px; }
+    .task{
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+      padding:12px; border-radius:16px; border:1px solid var(--line); background:var(--card2);
+    }
+    .task .left{ display:flex; gap:10px; align-items:flex-start; min-width:0; flex: 1; flex-wrap:wrap; }
+    .pill{
+      font-size:12px; padding:5px 10px; border-radius:999px; border:1px solid var(--btnLine);
+      opacity:.95; white-space:nowrap; flex:0 0 auto;
+    }
+    .pill.pos{ background:#102b22; border-color:var(--goodLine); }
+    .pill.appr{ background:#2a1b3b; border-color:#8a53a6; }
+    .task strong{
+      font-size:clamp(16px, 2.4vw, 18px);
+      display:block;
+      white-space:normal; /* mobile: NÃO truncar */
+      overflow:visible;
+      text-overflow:clip;
+      line-height:1.15;
+    }
+    .mini{ font-size:clamp(13px, 1.9vw, 14px); opacity:.86; margin-top:4px; }
+    .task .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+
+    /* Mobile fix: avoid action buttons covering long titles */
+    @media (max-width: 520px){
+      .task{ flex-direction:column; align-items:stretch; }
+      .task .left{ width:100%; }
+      .task .actions{ width:100%; justify-content:flex-end; }
+      .task .actions .btn{ flex:0 0 auto; }
+      .task .left{ flex-wrap:wrap; }
+    }
+    @media (max-width: 380px){
+      .task .actions{ justify-content:stretch; }
+      .task .actions .btn{ width:100%; }
+    }
+
+    /* Progress bar */
+    .bar{ height:12px; border-radius:999px; background:var(--bg); border:1px solid var(--line); overflow:hidden; }
+    .bar>div{ height:100%; width:0%; background:linear-gradient(90deg,#2ad0ff,#b3ff7a); }
+
+    /* Badges */
+    .badges{ display:flex; flex-wrap:wrap; gap:10px; }
+    .badge{ padding:10px 12px; border-radius:16px; border:1px solid var(--line); background:var(--card2); font-size:14px; min-width: 170px; }
+    .badge.lock{ opacity:.55; }
+
+    /* Tables: mobile scroll */
+    .tableWrap{ overflow:auto; -webkit-overflow-scrolling:touch; border-radius:14px; border:1px solid var(--line); }
+    table{ width:100%; border-collapse:collapse; min-width:720px; background:var(--card2); }
+    th, td{ border-bottom:1px solid var(--line); padding:10px 8px; font-size:14px; vertical-align:top; }
+    th{ text-align:left; opacity:.85; background:rgba(255,255,255,.02); position:sticky; top:0; }
+    .nowrap{ white-space:nowrap; }
+    .right{ text-align:right; }
+
+    /* Bottom navigation (mobile) */
+    .nav{
+      position:fixed; left:0; right:0; bottom:0;
+      padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+      background:rgba(11,16,32,.92);
+      border-top:1px solid var(--line);
+      backdrop-filter: blur(10px);
+      display:grid; grid-template-columns: repeat(4,1fr); gap:10px;
+      z-index: 50;
+    }
+    .nav button{
+      width:100%;
+      padding:12px 10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:transparent;
+      color:var(--txt);
+      font-weight:900;
+      font-size:14px;
+    }
+    .nav button.active{
+      background:var(--btn);
+      border-color:var(--btnLine);
+    }
+
+    /* Toast / live region */
+    .toast{
+      margin-top:10px; padding:12px; border-radius:14px; border:1px solid var(--line);
+      background:var(--bg);
+    }
+
+    /* PIN Modal */
+    .modalBack{
+      position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center;
+      padding:18px; z-index: 80;
+    }
+    .modalBack.show{ display:flex; }
+    .modal{
+      width:min(520px, 100%); background:var(--card); border:1px solid var(--line); border-radius:18px;
+      padding:14px; box-shadow:0 18px 50px rgba(0,0,0,.45);
+    }
+    .modal h3{ margin:0 0 8px; font-size:18px; }
+    .modal .hint{ font-size:13px; opacity:.8; margin-top:6px; }
+    .modal .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px; }
+    .modalActions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; flex-wrap:wrap; }
+
+    details{ border:1px solid var(--line); border-radius:16px; background:var(--card2); padding:12px; }
+    details summary{ cursor:pointer; font-weight:900; font-size:15px; }
+
+    .chip{ display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:var(--bg); font-size:13px; opacity:.95; }
+  </style>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mesada XP">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- HEADER (always visible) -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="muted">Jogador</div>
+          <div class="big" id="playerName">Arthur</div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <button class="btn" id="editNameBtn">Editar nome</button>
+          <button class="btn danger" id="resetBtn" title="Reseta tudo (com confirmação)">Reset</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div>
+          <div class="muted">Nível</div>
+          <div class="big" id="level">1</div>
+        </div>
+        <div>
+          <div class="muted">XP total</div>
+          <div class="big" id="xpTotal">0</div>
+        </div>
+        <div>
+          <div class="muted">Sequência (dias com atividade)</div>
+          <div class="big"><span id="streak">0</span> 🔥</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div style="min-width:220px">
+          <h2 style="margin:0">Semana atual</h2>
+          <div class="muted" id="weekLabel">—</div>
+        </div>
+        <div style="flex:1; min-width:220px">
+          <div class="muted">XP da semana</div>
+          <div class="big"><span id="xpWeek">0</span> XP</div>
+        </div>
+        <div style="flex:1; min-width:220px; text-align:right">
+          <div class="muted">R$ da semana</div>
+          <div class="big">R$ <span id="moneyWeek">0.00</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px" class="bar" aria-label="Progresso semanal (1000 XP referência)">
+        <div id="weekBar"></div>
+      </div>
+      <div class="muted" style="margin-top:8px">Referência: 1000 XP = R$ 10.</div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div>
+          <div class="muted">Disponível p/ sacar</div>
+          <div class="big">R$ <span id="moneyAvail">0.00</span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted">Acumulado (já fechado)</div>
+          <div class="big">R$ <span id="moneyBank">0.00</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGES -->
+    <div class="pagesDesktop">
+      <!-- PAGE: HOJE -->
+      <section class="page active" id="pageToday" aria-label="Página: Hoje">
+        <div class="card" style="margin-top:14px">
+          <div class="row">
+            <div>
+              <h2 style="margin:0">Missões de hoje</h2>
+              <div class="muted" id="todayLabel">—</div>
+            </div>
+            <button class="btn small" id="toggleParentsBtn">Modo Pais: OFF</button>
+          </div>
+          
+          <div class="toast" id="installBox" style="display:none" aria-live="polite">
+            <div class="row">
+              <div>
+                <strong>Adicionar à tela inicial</strong><br/>
+                <span class="muted">Instala como app no celular pra abrir rapidinho.</span>
+              </div>
+              <button class="btn good" id="installBtn">Instalar</button>
+            </div>
+            <div class="muted" id="installHint" style="margin-top:8px"></div>
+          </div>
+
+          <div class="hr"></div>
+          <div class="tasks" id="tasks"></div>
+        </div>
+      </section>
+
+      <!-- PAGE: PAIS -->
+      <section class="page" id="pageParents" aria-label="Página: Pais">
+        <div class="card" style="margin-top:14px">
+          <div class="row">
+            <div>
+              <h2 style="margin:0">Painel dos Pais</h2>
+              <div class="muted">Aprovar pendências, ajustar regras e missões.</div>
+            </div>
+            <button class="btn small gray" id="changePinBtn">Trocar PIN</button>
+          </div>
+
+          <div class="hr"></div>
+
+          <details id="parentsPanel" style="display:none">
+            <summary>Configurar e aprovar</summary>
+
+            <div class="muted" style="margin-top:8px">PIN protege este modo. Missões “grandes” podem exigir aprovação.</div>
+
+            <div class="hr"></div>
+
+            <div class="row">
+              <div>
+                <strong>Pendências</strong>
+                <div class="muted" id="pendingHint">—</div>
+              </div>
+              <div class="row" style="justify-content:flex-end">
+                <button class="btn small good" id="approveAllBtn">Aprovar todas</button>
+                <button class="btn small danger" id="rejectAllBtn">Recusar todas</button>
+              </div>
+            </div>
+
+            <div style="margin-top:10px" class="tableWrap" aria-label="Pendências (rolar lateral no celular)">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="nowrap">Data</th>
+                    <th>Missão</th>
+                    <th class="nowrap">Tag</th>
+                    <th class="nowrap right">XP</th>
+                    <th class="nowrap">Marcado</th>
+                    <th class="nowrap">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="pendingTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="row">
+              <div style="flex:1; min-width:230px">
+                <label>XP mínimo p/ exigir aprovação (Auto)</label>
+                <input id="approvalThreshold" type="number" min="0" step="1" />
+                <div class="muted" style="margin-top:6px">Ex.: 30 → missões com 30 XP ou mais viram “Aprovação: Auto”.</div>
+              </div>
+              <div style="flex:1; min-width:230px">
+                <button class="btn" id="addTaskBtn" style="width:100%; margin-top:22px">Adicionar missão</button>
+                <button class="btn gray" id="syncTasksBtn" style="width:100%; margin-top:10px">Atualizar lista de missões (sem apagar)</button>
+              </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div class="tableWrap" aria-label="Tabela de missões (rolar lateral no celular)">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Missão</th>
+                    <th class="nowrap">Tag</th>
+                    <th class="nowrap right">XP</th>
+                    <th class="nowrap">Aprovação</th>
+                    <th class="nowrap">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tasksTableBody"></tbody>
+              </table>
+            </div>
+          </details>
+
+          <div class="toast" style="margin-top:12px">
+            <strong>Modo Pais:</strong> <span id="parentsModeText">OFF</span><br/>
+            <span class="muted">Dica: coloca “Auto” nas missões que dá pra inventar história 😄</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE: MEDALHAS -->
+      <section class="page" id="pageBadges" aria-label="Página: Medalhas">
+        <div class="card" style="margin-top:14px">
+          <h2>Medalhas</h2>
+          <div class="muted">Progresso + constância. Sem clima de castigo.</div>
+          <div class="hr"></div>
+          <div class="badges" id="badges"></div>
+
+          <div class="hr"></div>
+
+          <h2>Ranking (pessoal)</h2>
+          <div class="muted">Recordes pra competir com ele mesmo.</div>
+          <div class="hr"></div>
+          <div class="row"><span class="muted">Melhor semana (XP)</span><strong id="bestWeek">0</strong></div>
+          <div class="row"><span class="muted">Melhor dia (XP)</span><strong id="bestDay">0</strong></div>
+          <div class="row"><span class="muted">Maior sequência</span><strong id="bestStreak">0</strong></div>
+        </div>
+      </section>
+
+      <!-- PAGE: PIX -->
+      <section class="page" id="pagePix" aria-label="Página: PIX">
+        <div class="card" style="margin-top:14px">
+          <h2>PIX (sacar)</h2>
+          <div class="muted">Só gera o resumo e o extrato. Tu paga no teu banco.</div>
+          <div class="hr"></div>
+
+          <div>
+            <label>Chave PIX (tua)</label>
+            <input id="pixKey" type="text" placeholder="ex: 55 99999-9999 ou CPF ou e-mail" />
+          </div>
+
+          <div class="hr"></div>
+
+          <button class="btn good" id="cashoutBtn" style="width:100%">Gerar pedido de PIX (máx. R$ 10 no sábado)</button>
+
+          <div class="toast" id="cashoutBox" style="display:none" aria-live="polite"></div>
+          <div class="toast" id="statusBox" style="display:none" aria-live="polite"></div>
+
+          <div class="muted" style="margin-top:10px">
+            * Se tiver mais de R$ 10 disponível, o resto fica acumulado.<br/>
+            * Se hoje não for sábado, o app avisa e não gera.
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Bottom nav: mobile only -->
+  <nav class="nav desktopHide" aria-label="Navegação">
+    <button id="navToday" class="active" data-page="pageToday">Hoje</button>
+    <button id="navParents" data-page="pageParents">Pais</button>
+    <button id="navBadges" data-page="pageBadges">Medalhas</button>
+    <button id="navPix" data-page="pagePix">PIX</button>
+  </nav>
+
+  <!-- PIN Modal -->
+  <div class="modalBack" id="pinModalBack" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+    <div class="modal">
+      <h3 id="pinTitle">PIN</h3>
+      <div class="muted" id="pinHelp">—</div>
+      <div class="hr"></div>
+      <label for="pinInput">Digite o PIN</label>
+      <input id="pinInput" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="••••" />
+      <div class="hint" id="pinHint"></div>
+      <div class="modalActions">
+        <button class="btn gray" id="pinCancelBtn">Cancelar</button>
+        <button class="btn good" id="pinOkBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ====== CONFIG ======
+  const TZ = "America/Sao_Paulo";
+  const XP_REF = 1000;
+  const RATE_R_PER_XP = 10 / XP_REF; // 1000 XP = R$10
+  const CASHOUT_CAP = 10.00;
+
+  const LEVELS = [
+    { lvl: 1, name: "Iniciante", xp: 0 },
+    { lvl: 2, name: "Ajudante da Casa", xp: 200 },
+    { lvl: 3, name: "Guardião da Rotina", xp: 500 },
+    { lvl: 4, name: "Mestre da Disciplina", xp: 1000 },
+    { lvl: 5, name: "Lenda da Família", xp: 2000 }
+  ];
+
+  const BADGES = [
+    { id:"semana_perfeita", title:"Semana Perfeita 🏆", desc:"7 dias seguidos com atividade", check:(s)=> (s.bestStreak||0) >= 7 },
+    { id:"frutinha", title:"Rei da Fruta 🍎", desc:"5 frutas aprovadas na semana", check:(s)=> (s._computed?.weekCounters?.fruit||0) >= 5 },
+    { id:"agua3", title:"Hidratação 3/3 💧", desc:"3 dias com 3 copos aprovados", check:(s)=> (s._computed?.counters?.waterPerfectDays||0) >= 3 },
+    { id:"faxina_ninja", title:"Faxina Ninja 🧹", desc:"5 missões de casa aprovadas na semana", check:(s)=> (s._computed?.weekCounters?.home||0) >= 5 },
+    { id:"sorriso", title:"Sorriso Brilhante 🦷", desc:"7 dias com escovação aprovada", check:(s)=> (s._computed?.counters?.toothDays||0) >= 7 },
+    { id:"combo10", title:"Sequência Insana 🔥", desc:"10 dias seguidos de atividade", check:(s)=> (s.bestStreak||0) >= 10 },
+  ];
+
+  // approvalMode: "auto"|"yes"|"no"
+  const DEFAULT_TASKS = [
+    { id: crypto.randomUUID(), name:"Arrumar brinquedos", xp: 15, tag:"Casa", kind:"home", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Levar lixo na lixeira", xp: 15, tag:"Casa", kind:"home", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Ajudar na casa (pais podem renomear)", xp: 15, tag:"Casa", kind:"home", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Organizar o quarto (cama + sem roupa jogada)", xp: 25, tag:"Casa", kind:"home", approvalMode:"auto" },
+
+    { id: crypto.randomUUID(), name:"Escovar os dentes (manhã)", xp: 10, tag:"Saúde", kind:"tooth", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Escovar os dentes (após almoço)", xp: 10, tag:"Saúde", kind:"tooth", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Escovar os dentes (noite)", xp: 10, tag:"Saúde", kind:"tooth", approvalMode:"auto" },
+
+    { id: crypto.randomUUID(), name:"Comer fruta/legume", xp: 50, tag:"Alimentação", kind:"fruit", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Comer arroz, feijão e carne", xp: 35, tag:"Alimentação", kind:"meal", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Experimentar comida nova", xp: 35, tag:"Alimentação", kind:"newfood", approvalMode:"auto" },
+
+    { id: crypto.randomUUID(), name:"Água 1/3 (200ml)", xp: 10, tag:"Saúde", kind:"water", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Água 2/3 (200ml)", xp: 10, tag:"Saúde", kind:"water", approvalMode:"auto" },
+    { id: crypto.randomUUID(), name:"Água 3/3 (200ml)", xp: 10, tag:"Saúde", kind:"water", approvalMode:"auto" },
+
+    { id: crypto.randomUUID(), name:"Atitude boa (sem reclamar)", xp: 20, tag:"Comportamento", kind:"mood", approvalMode:"auto" },
+  ];
+
+  // ====== SYNC DEFAULT TASKS (sem apagar histórico) ======
+  function normName(s){
+    return (s || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/\s+/g," ")
+      .trim();
+  }
+
+  function desiredTaskDefs(){
+    // Lista canônica do que tu quer como "padrão"
+    return [
+      { name:"Arrumar brinquedos", xp: 15, tag:"Casa", kind:"home", approvalMode:"auto" },
+      { name:"Levar lixo na lixeira", xp: 15, tag:"Casa", kind:"home", approvalMode:"auto" },
+      { name:"Ajudar na casa (pais podem renomear)", xp: 15, tag:"Casa", kind:"home", approvalMode:"auto" },
+      { name:"Organizar o quarto (cama + sem roupa jogada)", xp: 25, tag:"Casa", kind:"home", approvalMode:"auto" },
+
+      { name:"Escovar os dentes (manhã)", xp: 10, tag:"Saúde", kind:"tooth", approvalMode:"auto" },
+      { name:"Escovar os dentes (após almoço)", xp: 10, tag:"Saúde", kind:"tooth", approvalMode:"auto" },
+      { name:"Escovar os dentes (noite)", xp: 10, tag:"Saúde", kind:"tooth", approvalMode:"auto" },
+
+      { name:"Comer fruta/legume", xp: 50, tag:"Alimentação", kind:"fruit", approvalMode:"auto" },
+      { name:"Comer arroz, feijão e carne", xp: 35, tag:"Alimentação", kind:"meal", approvalMode:"auto" },
+      { name:"Experimentar comida nova", xp: 35, tag:"Alimentação", kind:"newfood", approvalMode:"auto" },
+
+      { name:"Água 1/3 (200ml)", xp: 10, tag:"Saúde", kind:"water", approvalMode:"auto" },
+      { name:"Água 2/3 (200ml)", xp: 10, tag:"Saúde", kind:"water", approvalMode:"auto" },
+      { name:"Água 3/3 (200ml)", xp: 10, tag:"Saúde", kind:"water", approvalMode:"auto" },
+
+      { name:"Atitude boa (sem reclamar)", xp: 20, tag:"Comportamento", kind:"mood", approvalMode:"auto" },
+    ];
+  }
+
+  function syncDefaultTasks(state){
+    state.tasks ||= [];
+
+    const defs = desiredTaskDefs();
+
+    // index by normalized name
+    const byName = new Map();
+    for (const t of state.tasks) byName.set(normName(t.name), t);
+
+    // avoid matching the same existing task twice
+    const usedIds = new Set();
+
+    function pickByHeuristic(def){
+      const key = normName(def.name);
+
+      // keyword heuristics by kind
+      const kw = {
+        home_toys: ["brinqu"],
+        home_trash: ["lixo", "lixeira"],
+        home_help: ["ajud"],
+        home_room: ["quarto", "cama", "roupa"],
+        tooth_manha: ["manha"],
+        tooth_almoco: ["almoco", "almoço"],
+        tooth_noite: ["noite"],
+        fruit: ["fruta", "legume", "verdura"],
+        meal: ["arroz", "feij", "carne"],
+        newfood: ["comida nova", "experimentar", "nova"],
+        water_1: ["agua 1/3", "água 1/3", "1/3"],
+        water_2: ["agua 2/3", "água 2/3", "2/3"],
+        water_3: ["agua 3/3", "água 3/3", "3/3"],
+        mood: ["atitude", "reclamar"],
+      };
+
+      // Determine heuristic group for this def
+      let group = null;
+      if (def.kind === "home") {
+        if (key.includes("brinqu")) group = "home_toys";
+        else if (key.includes("lixo")) group = "home_trash";
+        else if (key.includes("ajud")) group = "home_help";
+        else if (key.includes("quarto")) group = "home_room";
+      } else if (def.kind === "tooth") {
+        if (key.includes("manha")) group = "tooth_manha";
+        else if (key.includes("apos") || key.includes("almoco") || key.includes("almoço")) group = "tooth_almoco";
+        else if (key.includes("noite")) group = "tooth_noite";
+      } else if (def.kind === "water") {
+        if (key.includes("1/3")) group = "water_1";
+        else if (key.includes("2/3")) group = "water_2";
+        else if (key.includes("3/3")) group = "water_3";
+      } else if (def.kind === "fruit") group = "fruit";
+      else if (def.kind === "meal") group = "meal";
+      else if (def.kind === "newfood") group = "newfood";
+      else if (def.kind === "mood") group = "mood";
+
+      const words = group ? kw[group] : [];
+      const tasks = state.tasks.filter(t => !usedIds.has(t.id));
+
+      // 1) Try same kind + keyword hit
+      let candidates = tasks.filter(t => {
+        const tn = normName(t.name);
+        if ((t.kind || "") === def.kind) {
+          if (!words.length) return true;
+          return words.some(w => tn.includes(w));
+        }
+        return false;
+      });
+
+      // 2) If none, try keyword only (for cases where user renamed and lost kind)
+      if (!candidates.length && words.length) {
+        candidates = tasks.filter(t => {
+          const tn = normName(t.name);
+          return words.some(w => tn.includes(w));
+        });
+      }
+
+      // 3) If still none and kind is unique (fruit/meal/newfood/mood), try kind only
+      const uniqueKinds = new Set(["fruit","meal","newfood","mood"]);
+      if (!candidates.length && uniqueKinds.has(def.kind)) {
+        candidates = tasks.filter(t => (t.kind || "") === def.kind);
+      }
+
+      if (candidates.length === 1) return candidates[0];
+
+      // If multiple matches, avoid doing something errado
+      return null;
+    }
+
+    let updated = 0, added = 0, matchedByHeuristic = 0;
+
+    for (const d of defs) {
+      const key = normName(d.name);
+      let existing = byName.get(key);
+
+      if (!existing || usedIds.has(existing.id)) {
+        existing = pickByHeuristic(d);
+        if (existing) matchedByHeuristic++;
+      }
+
+      if (existing) {
+        usedIds.add(existing.id);
+
+        // Update without changing id (preserve history)
+        if (existing.xp !== d.xp) { existing.xp = d.xp; updated++; }
+        if ((existing.tag || "") !== d.tag) { existing.tag = d.tag; updated++; }
+        if ((existing.kind || "") !== d.kind) { existing.kind = d.kind; updated++; }
+        if ((existing.approvalMode || "auto") !== d.approvalMode) { existing.approvalMode = d.approvalMode; updated++; }
+      } else {
+        state.tasks.push({ id: crypto.randomUUID(), ...d });
+        added++;
+      }
+    }
+
+    save(state);
+    render(state);
+    showStatus(`Missões atualizadas ✅ (novas: ${added}, ajustes: ${updated}, por tipo: ${matchedByHeuristic})`);
+  }
+
+
+  // ====== STORAGE ======
+  const KEY = "mesada_xp_v7_mobile";
+
+  function load() {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) {
+      return {
+        playerName: "Arthur",
+        pixKey: "",
+        tasks: DEFAULT_TASKS,
+
+        // days[YYYY-MM-DD] = { doneTasks:[{taskId, markedAt, approvedAt}], pendingTasks:[{taskId, markedAt}], xpEarned:number }
+        days: {},
+
+        xpTotal: 0,
+        bestWeek: 0,
+        bestDay: 0,
+        bestStreak: 0,
+        badges: {},
+
+        // Safer money model:
+        // settledWeekMoney[wkId] = deposit value (money earned in that week, once)
+        // cashouts = [{at, wkId, amount, pixKey}]
+        settledWeekMoney: {},
+        cashouts: [],
+
+        lastSeenWeekId: null,
+
+        parentsMode: false,
+        approvalThresholdXP: 30,
+
+        pinHash: "",
+        pinLockUntil: 0,
+        pinFails: 0
+      };
+    }
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  function save(state) { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+  // ====== Tiny status helper ======
+  function showStatus(msg, kind="info") {
+    const box = document.getElementById("statusBox");
+    if (!box) return;
+    box.style.display = "block";
+    box.innerHTML = kind === "warn"
+      ? `⚠️ <strong>${msg}</strong>`
+      : `✅ <strong>${msg}</strong>`;
+    setTimeout(() => { box.style.display = "none"; }, 3500);
+  }
+
+  // ====== PIN MODAL ======
+  const modalBack = () => document.getElementById("pinModalBack");
+  const pinInput = () => document.getElementById("pinInput");
+  const pinTitle = () => document.getElementById("pinTitle");
+  const pinHelp = () => document.getElementById("pinHelp");
+  const pinHint = () => document.getElementById("pinHint");
+  const pinOkBtn = () => document.getElementById("pinOkBtn");
+  const pinCancelBtn = () => document.getElementById("pinCancelBtn");
+
+  function askPinModal({ title="PIN", help="Digite o PIN.", hint="" }={}) {
+    return new Promise((resolve) => {
+      pinTitle().textContent = title;
+      pinHelp().textContent = help;
+      pinHint().textContent = hint || "";
+      pinInput().value = "";
+      modalBack().classList.add("show");
+      setTimeout(() => pinInput().focus(), 30);
+
+      const cleanup = () => {
+        modalBack().classList.remove("show");
+        pinOkBtn().onclick = null;
+        pinCancelBtn().onclick = null;
+        modalBack().onclick = null;
+        document.onkeydown = null;
+      };
+
+      pinOkBtn().onclick = () => {
+        const v = (pinInput().value || "").trim();
+        cleanup();
+        resolve(v || null);
+      };
+      pinCancelBtn().onclick = () => { cleanup(); resolve(null); };
+      modalBack().onclick = (e) => {
+        if (e.target === modalBack()) { cleanup(); resolve(null); }
+      };
+      document.onkeydown = (e) => {
+        if (e.key === "Escape") { cleanup(); resolve(null); }
+        if (e.key === "Enter") { pinOkBtn().click(); }
+      };
+    });
+  }
+
+  // ====== PIN ======
+  async function sha256(text) {
+    const data = new TextEncoder().encode(text);
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2,"0")).join("");
+  }
+  function nowMs(){ return Date.now(); }
+
+  async function ensurePinSetup(state) {
+    if (state.pinHash) return true;
+
+    const pin1 = await askPinModal({
+      title: "Criar PIN (Pais)",
+      help: "Cria um PIN de 4 a 8 números.",
+      hint: "Dica: algo fácil pra tu lembrar, difícil pro guri adivinhar 😄"
+    });
+    if (!pin1) return false;
+    if (!/^\d{4,8}$/.test(pin1)) { showStatus("PIN inválido. Usa 4 a 8 números.", "warn"); return false; }
+
+    const pin2 = await askPinModal({ title:"Confirmar PIN", help:"Confirma o PIN.", hint:"Repete o mesmo PIN." });
+    if (pin2 !== pin1) { showStatus("PIN não confere.", "warn"); return false; }
+
+    state.pinHash = await sha256(pin1);
+    state.pinFails = 0;
+    state.pinLockUntil = 0;
+    save(state);
+    showStatus("PIN criado. Modo Pais protegido ✅");
+    return true;
+  }
+
+  async function verifyPin(state) {
+    if ((state.pinLockUntil || 0) > nowMs()) {
+      const s = Math.ceil((state.pinLockUntil - nowMs())/1000);
+      showStatus(`PIN bloqueado por ${s}s (muitas tentativas).`, "warn");
+      return false;
+    }
+
+    const pin = await askPinModal({ title:"Modo Pais", help:"Digite o PIN.", hint:"3 erros bloqueia 2 min." });
+    if (!pin) return false;
+
+    const h = await sha256(pin);
+    if (h === state.pinHash) {
+      state.pinFails = 0;
+      state.pinLockUntil = 0;
+      save(state);
+      return true;
+    }
+
+    state.pinFails = (state.pinFails || 0) + 1;
+    if (state.pinFails >= 3) {
+      state.pinLockUntil = nowMs() + 2 * 60 * 1000;
+      state.pinFails = 0;
+      showStatus("Errou 3x. Bloqueei por 2 minutos 😅", "warn");
+    } else {
+      showStatus("PIN incorreto.", "warn");
+    }
+    save(state);
+    return false;
+  }
+
+  async function changePin(state) {
+    const ok = await verifyPin(state);
+    if (!ok) return;
+
+    const pin1 = await askPinModal({ title:"Novo PIN", help:"Novo PIN (4 a 8 números)." });
+    if (!pin1) return;
+    if (!/^\d{4,8}$/.test(pin1)) { showStatus("PIN inválido.", "warn"); return; }
+
+    const pin2 = await askPinModal({ title:"Confirmar novo PIN", help:"Confirma o novo PIN." });
+    if (pin2 !== pin1) { showStatus("PIN não confere.", "warn"); return; }
+
+    state.pinHash = await sha256(pin1);
+    state.pinFails = 0;
+    state.pinLockUntil = 0;
+    save(state);
+    showStatus("PIN atualizado ✅");
+  }
+
+  // ====== DATE HELPERS ======
+  function partsNow() {
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: TZ, year:"numeric", month:"2-digit", day:"2-digit", weekday:"short"
+    });
+    const parts = fmt.formatToParts(new Date());
+    const get = (t) => parts.find(p => p.type === t)?.value;
+    const y = get("year"), m = get("month"), d = get("day");
+    const weekday = get("weekday");
+    return { y, m, d, weekday, iso: `${y}-${m}-${d}` };
+  }
+
+  // Semana: domingo -> sábado
+  function weekIdFor(isoDate) {
+    const dt = new Date(isoDate + "T12:00:00");
+    const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year:"numeric", month:"2-digit", day:"2-digit" });
+    const localISO = fmt.format(dt);
+    const local = new Date(localISO + "T12:00:00");
+    const day = local.getDay();
+
+    const start = new Date(local);
+    start.setDate(local.getDate() - day);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+
+    const startISO = fmt.format(start);
+    const endISO = fmt.format(end);
+    return `${startISO}_to_${endISO}`;
+  }
+
+  function weekRangeFromWeekId(wkId) {
+    const [startISO, endISO] = wkId.split("_to_");
+    return { startISO, endISO };
+  }
+
+  function eachDateInclusive(startISO, endISO) {
+    const out = [];
+    const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year:"numeric", month:"2-digit", day:"2-digit" });
+    let cur = new Date(startISO + "T12:00:00");
+    const end = new Date(endISO + "T12:00:00");
+    while (cur <= end) {
+      out.push(fmt.format(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return out;
+  }
+
+  function moneyFromXP(xp) { return Math.max(0, xp) * RATE_R_PER_XP; }
+  function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+
+  function computeLevel(xpTotal) {
+    let current = LEVELS[0];
+    for (const l of LEVELS) if (xpTotal >= l.xp) current = l;
+    return current;
+  }
+
+  // ====== Derived computations (fixes counters/streak inconsistencies) ======
+  function calcWeekXP(state, wkId) {
+    const { startISO, endISO } = weekRangeFromWeekId(wkId);
+    const dates = eachDateInclusive(startISO, endISO);
+    let sum = 0;
+    for (const iso of dates) sum += (state.days[iso]?.xpEarned || 0);
+    return sum;
+  }
+
+  function calcWeekCounters(state, wkId) {
+    const { startISO, endISO } = weekRangeFromWeekId(wkId);
+    const dates = eachDateInclusive(startISO, endISO);
+    const weekCounters = { fruit:0, home:0 };
+    for (const iso of dates) {
+      const day = state.days[iso];
+      const done = day?.doneTasks || [];
+      for (const entry of done) {
+        const t = (state.tasks || []).find(x => x.id === entry.taskId);
+        if (!t) continue;
+        if (t.kind === "fruit") weekCounters.fruit++;
+        if (t.kind === "home") weekCounters.home++;
+      }
+    }
+    return weekCounters;
+  }
+
+  function calcGlobalCounters(state) {
+    let toothDaysSet = new Set();
+    let waterPerfectDaysSet = new Set();
+
+    const waterIds = (state.tasks || []).filter(t => t.kind === "water").map(t => t.id);
+    const waterIdSet = new Set(waterIds);
+
+    for (const [iso, day] of Object.entries(state.days || {})) {
+      const done = day?.doneTasks || [];
+      // Tooth: day has at least one tooth task approved
+      let toothDone = false;
+      let waterDoneCount = 0;
+
+      for (const entry of done) {
+        const t = (state.tasks || []).find(x => x.id === entry.taskId);
+        if (!t) continue;
+        if (t.kind === "tooth") toothDone = true;
+        if (waterIdSet.has(entry.taskId)) waterDoneCount++;
+      }
+
+      if (toothDone) toothDaysSet.add(iso);
+      if (waterDoneCount >= 3) waterPerfectDaysSet.add(iso);
+    }
+
+    return {
+      toothDays: toothDaysSet.size,
+      waterPerfectDays: waterPerfectDaysSet.size
+    };
+  }
+
+  function recomputeTotals(state) {
+    state.xpTotal = Object.values(state.days || {}).reduce((acc, d) => acc + (d?.xpEarned || 0), 0);
+  }
+
+  // Streak: days with ANY activity (done OR pending)
+  function calcStreakActivity(state) {
+    const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year:"numeric", month:"2-digit", day:"2-digit" });
+    let streak = 0;
+    let cur = new Date(partsNow().iso + "T12:00:00");
+    while (true) {
+      const iso = fmt.format(cur);
+      const day = state.days[iso];
+      const hasActivity = (day?.doneTasks?.length || 0) > 0 || (day?.pendingTasks?.length || 0) > 0;
+      if (hasActivity) { streak++; cur.setDate(cur.getDate() - 1); }
+      else break;
+    }
+    state.bestStreak = Math.max(state.bestStreak || 0, streak);
+    return streak;
+  }
+
+  // ====== Safer weekly settlement + available calculation ======
+  function sumSettledMoney(state) {
+    return Object.values(state.settledWeekMoney || {}).reduce((a,b)=> a + (Number(b)||0), 0);
+  }
+  function sumCashouts(state) {
+    return (state.cashouts || []).reduce((a,x)=> a + (Number(x.amount)||0), 0);
+  }
+
+  function computeAvailable(state, wkId) {
+    const settled = sumSettledMoney(state);
+    const paid = sumCashouts(state);
+    const currentWeekMoney = moneyFromXP(calcWeekXP(state, wkId));
+    const currentWeekSettled = Number(state.settledWeekMoney?.[wkId] || 0);
+    // Available includes current week if not settled yet (so you can pay on Saturday)
+    const available = round2((settled - paid) + (currentWeekSettled ? 0 : currentWeekMoney));
+    return Math.max(0, available);
+  }
+
+  function ensureWeekHandling(state) {
+    const today = partsNow().iso;
+    const wk = weekIdFor(today);
+
+    // If week changed since last seen, settle previous week once (store exact amount, not boolean)
+    if (state.lastSeenWeekId && state.lastSeenWeekId !== wk) {
+      const prev = state.lastSeenWeekId;
+      if (!state.settledWeekMoney?.[prev]) {
+        const prevMoney = round2(moneyFromXP(calcWeekXP(state, prev)));
+        state.settledWeekMoney[prev] = prevMoney;
+      }
+    }
+
+    state.lastSeenWeekId = wk;
+  }
+
+  // ====== HELPERS ======
+  function ensureDay(state, isoDate) {
+    if (!state.days[isoDate]) state.days[isoDate] = { doneTasks: [], pendingTasks: [], xpEarned: 0 };
+    state.days[isoDate].doneTasks ||= [];
+    state.days[isoDate].pendingTasks ||= [];
+    state.days[isoDate].xpEarned ||= 0;
+    return state.days[isoDate];
+  }
+
+  function effectiveRequiresApproval(state, task) {
+    const mode = task.approvalMode || "auto";
+    if (mode === "yes") return true;
+    if (mode === "no") return false;
+    return (task.xp || 0) >= (state.approvalThresholdXP ?? 30);
+  }
+
+  function toBRDateTime(iso) {
+    try { return new Date(iso).toLocaleString("pt-BR", { timeZone: TZ }); } catch { return iso; }
+  }
+  function toBRTime(iso) {
+    try { return new Date(iso).toLocaleTimeString("pt-BR", { timeZone: TZ }); } catch { return "--:--:--"; }
+  }
+
+  function findPendingEntry(day, taskId) {
+    return (day.pendingTasks || []).find(x => x.taskId === taskId);
+  }
+  function findDoneEntry(day, taskId) {
+    return (day.doneTasks || []).find(x => x.taskId === taskId);
+  }
+
+  function findAnyDoneDate(state, taskId) {
+    // Returns latest ISO date where taskId appears in doneTasks (useful for "Desfazer" safety)
+    let best = null;
+    for (const [iso, day] of Object.entries(state.days || {})) {
+      if ((day?.doneTasks || []).some(x => x.taskId === taskId)) {
+        if (!best || iso > best) best = iso;
+      }
+    }
+    return best;
+  }
+
+  // ====== MIGRATION (V6 -> V7) ======
+  function migrate(state) {
+    // normalize tasks
+    state.tasks = (state.tasks || DEFAULT_TASKS).map(t => ({ approvalMode:"auto", ...t }));
+    state.days ||= {};
+    for (const [iso, day] of Object.entries(state.days)) {
+      if (!day) continue;
+      day.doneTasks ||= [];
+      day.pendingTasks ||= [];
+      day.xpEarned ||= 0;
+    }
+
+    state.settledWeekMoney ||= {};
+    state.cashouts ||= [];
+    state.lastSeenWeekId ||= null;
+
+    state.approvalThresholdXP ??= 30;
+    state.pinHash ||= "";
+    state.pinLockUntil ||= 0;
+    state.pinFails ||= 0;
+
+    state.badges ||= {};
+    state.bestWeek ||= 0;
+    state.bestDay ||= 0;
+    state.bestStreak ||= 0;
+
+    recomputeTotals(state);
+    return state;
+  }
+
+  // ====== PENDÊNCIAS ======
+  function getPendingItems(state) {
+    const out = [];
+    for (const [iso, day] of Object.entries(state.days || {})) {
+      const pending = day?.pendingTasks || [];
+      if (!pending.length) continue;
+      for (const entry of pending) {
+        const task = (state.tasks || []).find(t => t.id === entry.taskId);
+        if (!task) continue;
+        out.push({ isoDate: iso, taskId: entry.taskId, task, markedAt: entry.markedAt });
+      }
+    }
+    out.sort((a,b) => b.isoDate.localeCompare(a.isoDate));
+    return out;
+  }
+
+  function approveAllPending(state) {
+    const items = getPendingItems(state);
+    for (const it of items) approveTask(state, it.isoDate, it.taskId, true);
+  }
+
+  function rejectAllPending(state) {
+    const items = getPendingItems(state);
+    for (const it of items) rejectTask(state, it.isoDate, it.taskId, true);
+  }
+
+  // ====== Weekly statement ======
+  function weekRangeFromWeekId(wkId) {
+    const [startISO, endISO] = wkId.split("_to_");
+    return { startISO, endISO };
+  }
+
+  function generateWeeklyStatementHTML(state, wkId) {
+    const { startISO, endISO } = weekRangeFromWeekId(wkId);
+    const dates = eachDateInclusive(startISO, endISO);
+
+    let html = `<div class="hr"></div>
+      <div class="row" style="align-items:flex-start">
+        <div>
+          <div style="font-weight:900; font-size:15px">📋 Extrato da semana</div>
+          <div class="muted">Mostra quando clicou <strong>Fiz!</strong> (e aprovação quando existir).</div>
+        </div>
+        <div class="chip"><strong>${startISO}</strong> → <strong>${endISO}</strong></div>
+      </div>
+      <div class="hr"></div>`;
+
+    let weekTotalXP = 0;
+    let any = false;
+
+    for (const date of dates) {
+      const day = state.days[date];
+      const done = day?.doneTasks || [];
+      if (!done.length) continue;
+
+      any = true;
+      let dayXP = 0;
+
+      html += `<div style="margin-top:10px"><strong>${date}</strong></div>`;
+
+      const sorted = [...done].sort((a,b) => (a.markedAt || "").localeCompare(b.markedAt || ""));
+      for (const entry of sorted) {
+        const task = (state.tasks || []).find(t => t.id === entry.taskId);
+        if (!task) continue;
+        dayXP += (task.xp || 0);
+
+        const tMarked = entry.markedAt ? toBRTime(entry.markedAt) : "--:--:--";
+        const tAppr = entry.approvedAt ? toBRTime(entry.approvedAt) : null;
+
+        html += `• ${task.name} (+${task.xp} XP)
+          <span class="muted"> | Marcou: ${tMarked}${tAppr ? ` | Aprovou: ${tAppr}` : ""}</span><br/>`;
+      }
+
+      html += `<div class="muted">Total do dia: <strong>${dayXP}</strong> XP</div>`;
+      weekTotalXP += dayXP;
+    }
+
+    const pendingItemsInWeek = [];
+    for (const date of dates) {
+      const day = state.days[date];
+      const pend = day?.pendingTasks || [];
+      for (const p of pend) {
+        const task = (state.tasks || []).find(t => t.id === p.taskId);
+        if (task) pendingItemsInWeek.push({ date, task, markedAt: p.markedAt });
+      }
+    }
+
+    if (!any) html += `<div class="muted">Sem atividades aprovadas nesta semana ainda.</div>`;
+
+    html += `<div class="hr"></div>
+      <div><strong>Total aprovado da semana:</strong> ${weekTotalXP} XP</div>`;
+
+    if (pendingItemsInWeek.length) {
+      html += `<div class="hr"></div>
+        <div style="font-weight:900; font-size:15px">⏳ Pendências na semana (não entram no XP)</div>`;
+      for (const it of pendingItemsInWeek.sort((a,b)=> b.date.localeCompare(a.date))) {
+        html += `• ${it.date} | ${it.task.name} <span class="muted">(marcou ${it.markedAt ? toBRDateTime(it.markedAt) : ""})</span><br/>`;
+      }
+    }
+    return html;
+  }
+
+  // ====== UI ======
+  const el = (id) => document.getElementById(id);
+
+  function setActivePage(pageId) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    const page = document.getElementById(pageId);
+    if (page) page.classList.add("active");
+
+    document.querySelectorAll(".nav button").forEach(b => b.classList.remove("active"));
+    const btn = document.querySelector(`.nav button[data-page="${pageId}"]`);
+    if (btn) btn.classList.add("active");
+  }
+
+  function render(state) {
+    ensureWeekHandling(state);
+
+    const now = partsNow();
+    const wkId = weekIdFor(now.iso);
+
+    const weekXP = calcWeekXP(state, wkId);
+    const weekMoney = moneyFromXP(weekXP);
+
+    // derived
+    const weekCounters = calcWeekCounters(state, wkId);
+    const counters = calcGlobalCounters(state);
+    state._computed = { weekCounters, counters }; // not saved (render-only)
+
+    const available = computeAvailable(state, wkId);
+    const settledTotal = round2(sumSettledMoney(state) - sumCashouts(state));
+    const bank = Math.max(0, settledTotal);
+
+    el("playerName").textContent = state.playerName || "Arthur";
+    el("xpTotal").textContent = String(state.xpTotal || 0);
+    el("level").textContent = String(computeLevel(state.xpTotal || 0).lvl);
+
+    el("weekLabel").textContent = `Semana: ${wkId.replace("_to_"," → ")}`;
+    el("todayLabel").textContent = `Hoje: ${now.iso} (${now.weekday})`;
+
+    el("xpWeek").textContent = String(weekXP);
+    el("moneyWeek").textContent = weekMoney.toFixed(2);
+    el("moneyAvail").textContent = available.toFixed(2);
+    el("moneyBank").textContent = bank.toFixed(2);
+
+    const pct = Math.min(100, Math.max(0, (weekXP / XP_REF) * 100));
+    el("weekBar").style.width = `${pct}%`;
+
+    const streak = calcStreakActivity(state);
+    el("streak").textContent = String(streak);
+    el("bestWeek").textContent = String(state.bestWeek || 0);
+    el("bestDay").textContent = String(state.bestDay || 0);
+    el("bestStreak").textContent = String(state.bestStreak || 0);
+
+    el("pixKey").value = state.pixKey || "";
+
+    el("toggleParentsBtn").textContent = `Modo Pais: ${state.parentsMode ? "ON" : "OFF"}`;
+    el("parentsModeText").textContent = state.parentsMode ? "ON ✅" : "OFF";
+    el("parentsPanel").style.display = state.parentsMode ? "block" : "none";
+    el("approvalThreshold").value = String(state.approvalThresholdXP ?? 30);
+
+    // TODAY tasks
+    const day = ensureDay(state, now.iso);
+    const doneSet = new Set((day.doneTasks || []).map(x => x.taskId));
+    const pendingSet = new Set((day.pendingTasks || []).map(x => x.taskId));
+
+    const tasksRoot = el("tasks");
+    tasksRoot.innerHTML = "";
+
+    (state.tasks || []).forEach(t => {
+      const row = document.createElement("div");
+      row.className = "task";
+
+      const left = document.createElement("div");
+      left.className = "left";
+
+      const needsApproval = effectiveRequiresApproval(state, t);
+
+      const badge = document.createElement("span");
+      badge.className = "pill pos";
+      badge.textContent = `${t.tag} • +${t.xp} XP`;
+      left.appendChild(badge);
+
+      if (needsApproval) {
+        const appr = document.createElement("span");
+        appr.className = "pill appr";
+        appr.textContent = "Aprovação";
+        left.appendChild(appr);
+      }
+
+      const text = document.createElement("div");
+      text.style.minWidth = "0";
+      const title = document.createElement("strong");
+      title.textContent = t.name;
+
+      const sub = document.createElement("div");
+      sub.className = "mini";
+
+      const isDone = doneSet.has(t.id);
+      const isPending = pendingSet.has(t.id);
+
+      if (isDone) {
+        const entry = findDoneEntry(day, t.id);
+        sub.textContent = entry?.markedAt ? `Concluída ✅ (marcou ${toBRTime(entry.markedAt)})` : "Concluída ✅";
+      } else if (isPending) {
+        const entry = findPendingEntry(day, t.id);
+        sub.textContent = entry?.markedAt ? `Aguardando aprovação ⏳ (marcou ${toBRTime(entry.markedAt)})` : "Aguardando aprovação ⏳";
+      } else {
+        sub.textContent = "Pendente";
+      }
+
+      text.appendChild(title);
+      text.appendChild(sub);
+      left.appendChild(text);
+
+      const right = document.createElement("div");
+      right.className = "actions";
+
+      if (!isDone && !isPending) {
+        const btn = document.createElement("button");
+        btn.className = "btn good";
+        btn.textContent = needsApproval ? "Fiz! (pedir aprovação)" : "Fiz!";
+        btn.onclick = () => childMarkDone(state, now.iso, t.id);
+        right.appendChild(btn);
+      }
+
+      if (isPending) {
+        const cancel = document.createElement("button");
+        cancel.className = "btn danger";
+        cancel.textContent = "Cancelar";
+        cancel.onclick = () => cancelPending(state, now.iso, t.id);
+        right.appendChild(cancel);
+
+        if (state.parentsMode) {
+          const approve = document.createElement("button");
+          approve.className = "btn good";
+          approve.textContent = "Aprovar";
+          approve.onclick = () => approveTask(state, now.iso, t.id);
+
+          const reject = document.createElement("button");
+          reject.className = "btn danger";
+          reject.textContent = "Recusar";
+          reject.onclick = () => {
+            const ok = confirm("Recusar esta missão pendente?");
+            if (!ok) return;
+            rejectTask(state, now.iso, t.id);
+          };
+
+          right.appendChild(approve);
+          right.appendChild(reject);
+        }
+      }
+
+      if (isDone) {
+        const undo = document.createElement("button");
+        undo.className = "btn danger";
+        undo.textContent = "Desfazer";
+        undo.onclick = () => undoApprovedSafe(state, now.iso, t.id);
+        right.appendChild(undo);
+      }
+
+      row.appendChild(left);
+      row.appendChild(right);
+      tasksRoot.appendChild(row);
+    });
+
+    // Parents tables
+    if (state.parentsMode) {
+      renderPendingPanel(state);
+      renderTasksTable(state);
+    }
+
+    // Badges
+    const badgesRoot = el("badges");
+    badgesRoot.innerHTML = "";
+    BADGES.forEach(b => {
+      const unlocked = !!state.badges?.[b.id] || b.check(state);
+      if (unlocked && !state.badges[b.id]) state.badges[b.id] = true;
+
+      const chip = document.createElement("div");
+      chip.className = "badge" + (unlocked ? "" : " lock");
+      chip.innerHTML = `<div><strong>${b.title}</strong></div><div class="muted">${b.desc}</div>`;
+      badgesRoot.appendChild(chip);
+    });
+
+    // Records
+    state.bestWeek = Math.max(state.bestWeek || 0, weekXP);
+
+    // IMPORTANT: render does not save anymore
+    el("cashoutBtn").disabled = false;
+  }
+
+  function renderPendingPanel(state) {
+    const items = getPendingItems(state);
+    el("pendingHint").textContent = items.length ? `${items.length} pendência(s) no total.` : "Sem pendências 🎉";
+
+    const body = el("pendingTableBody");
+    body.innerHTML = "";
+
+    items.forEach(it => {
+      const tr = document.createElement("tr");
+
+      const tdDate = document.createElement("td");
+      tdDate.className = "nowrap";
+      tdDate.textContent = it.isoDate;
+
+      const tdName = document.createElement("td");
+      tdName.textContent = it.task.name;
+
+      const tdTag = document.createElement("td");
+      tdTag.className = "nowrap";
+      tdTag.textContent = it.task.tag;
+
+      const tdXP = document.createElement("td");
+      tdXP.className = "right nowrap";
+      tdXP.textContent = String(it.task.xp);
+
+      const tdMarked = document.createElement("td");
+      tdMarked.className = "nowrap";
+      tdMarked.textContent = it.markedAt ? toBRDateTime(it.markedAt) : "";
+
+      const tdAct = document.createElement("td");
+      tdAct.className = "nowrap";
+
+      const approve = document.createElement("button");
+      approve.className = "btn small good";
+      approve.textContent = "Aprovar";
+      approve.onclick = () => approveTask(state, it.isoDate, it.taskId);
+
+      const reject = document.createElement("button");
+      reject.className = "btn small danger";
+      reject.style.marginLeft = "8px";
+      reject.textContent = "Recusar";
+      reject.onclick = () => {
+        const ok = confirm(`Recusar "${it.task.name}" de ${it.isoDate}?`);
+        if (!ok) return;
+        rejectTask(state, it.isoDate, it.taskId);
+      };
+
+      tdAct.appendChild(approve);
+      tdAct.appendChild(reject);
+
+      tr.appendChild(tdDate);
+      tr.appendChild(tdName);
+      tr.appendChild(tdTag);
+      tr.appendChild(tdXP);
+      tr.appendChild(tdMarked);
+      tr.appendChild(tdAct);
+
+      body.appendChild(tr);
+    });
+  }
+
+  function renderTasksTable(state) {
+    const body = document.getElementById("tasksTableBody");
+    body.innerHTML = "";
+
+    (state.tasks || []).forEach(t => {
+      const tr = document.createElement("tr");
+
+      const tdName = document.createElement("td");
+      tdName.textContent = t.name;
+
+      const tdTag = document.createElement("td");
+      tdTag.textContent = t.tag;
+
+      const tdXP = document.createElement("td");
+      tdXP.className = "right nowrap";
+      tdXP.textContent = String(t.xp);
+
+      const tdAp = document.createElement("td");
+      tdAp.className = "nowrap";
+      const btnAp = document.createElement("button");
+      btnAp.className = "btn small gray";
+      btnAp.textContent = approvalModeLabel(state, t);
+      btnAp.onclick = () => cycleApprovalMode(state, t.id);
+      tdAp.appendChild(btnAp);
+
+      const tdAct = document.createElement("td");
+      tdAct.className = "nowrap";
+
+      const edit = document.createElement("button");
+      edit.className = "btn small";
+      edit.textContent = "Editar";
+      edit.onclick = () => openEditTaskPrompt(state, t.id);
+
+      const del = document.createElement("button");
+      del.className = "btn small danger";
+      del.style.marginLeft = "8px";
+      del.textContent = "Excluir";
+      del.onclick = () => deleteTask(state, t.id);
+
+      tdAct.appendChild(edit);
+      tdAct.appendChild(del);
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdTag);
+      tr.appendChild(tdXP);
+      tr.appendChild(tdAp);
+      tr.appendChild(tdAct);
+
+      body.appendChild(tr);
+    });
+  }
+
+  function approvalModeLabel(state, task) {
+    const mode = task.approvalMode || "auto";
+    const needs = effectiveRequiresApproval(state, task);
+    if (mode === "yes") return "Sim";
+    if (mode === "no") return "Não";
+    return `Auto (${needs ? "Sim" : "Não"})`;
+  }
+
+  function cycleApprovalMode(state, taskId) {
+    const t = (state.tasks || []).find(x => x.id === taskId);
+    if (!t) return;
+    const cur = t.approvalMode || "auto";
+    t.approvalMode = (cur === "auto") ? "yes" : (cur === "yes") ? "no" : "auto";
+    save(state);
+    render(state);
+  }
+
+  // ====== MISSÕES ======
+  function childMarkDone(state, isoDate, taskId) {
+    ensureWeekHandling(state);
+    const t = (state.tasks || []).find(x => x.id === taskId);
+    if (!t) return;
+
+    const day = ensureDay(state, isoDate);
+
+    const isDone = !!findDoneEntry(day, taskId);
+    const isPending = !!findPendingEntry(day, taskId);
+    if (isDone || isPending) return;
+
+    const needsApproval = effectiveRequiresApproval(state, t);
+    const markedAt = new Date().toISOString();
+
+    if (needsApproval) {
+      day.pendingTasks.push({ taskId, markedAt });
+      save(state);
+      render(state);
+      return;
+    }
+
+    // approve directly
+    day.doneTasks.push({ taskId, markedAt, approvedAt: markedAt });
+    day.xpEarned += t.xp;
+
+    state.bestDay = Math.max(state.bestDay || 0, Math.max(0, day.xpEarned || 0));
+    recomputeTotals(state);
+
+    save(state);
+    render(state);
+  }
+
+  function cancelPending(state, isoDate, taskId) {
+    const day = ensureDay(state, isoDate);
+    day.pendingTasks = (day.pendingTasks || []).filter(x => x.taskId !== taskId);
+    save(state);
+    render(state);
+  }
+
+  function approveTask(state, isoDate, taskId, silent=false) {
+    ensureWeekHandling(state);
+    const t = (state.tasks || []).find(x => x.id === taskId);
+    if (!t) return;
+
+    const day = ensureDay(state, isoDate);
+    const pend = findPendingEntry(day, taskId);
+    if (!pend) return;
+
+    day.pendingTasks = (day.pendingTasks || []).filter(x => x.taskId !== taskId);
+
+    const approvedAt = new Date().toISOString();
+    day.doneTasks.push({ taskId, markedAt: pend.markedAt, approvedAt });
+    day.xpEarned += t.xp;
+
+    state.bestDay = Math.max(state.bestDay || 0, Math.max(0, day.xpEarned || 0));
+    recomputeTotals(state);
+
+    save(state);
+    if (!silent) render(state);
+  }
+
+  function rejectTask(state, isoDate, taskId, silent=false) {
+    const day = ensureDay(state, isoDate);
+    day.pendingTasks = (day.pendingTasks || []).filter(x => x.taskId !== taskId);
+    save(state);
+    if (!silent) render(state);
+  }
+
+  function undoApprovedSafe(state, preferredIsoDate, taskId) {
+    // Fix #1: undo works even if date mismatch (find actual date)
+    const iso = findAnyDoneDate(state, taskId) || preferredIsoDate;
+    undoApproved(state, iso, taskId);
+  }
+
+  function undoApproved(state, isoDate, taskId) {
+    ensureWeekHandling(state);
+    const t = (state.tasks || []).find(x => x.id === taskId);
+    if (!t) return;
+
+    const day = ensureDay(state, isoDate);
+    const done = findDoneEntry(day, taskId);
+    if (!done) return;
+
+    day.doneTasks = (day.doneTasks || []).filter(x => x.taskId !== taskId);
+    day.xpEarned -= t.xp;
+
+    state.bestDay = Math.max(state.bestDay || 0, Math.max(0, day.xpEarned || 0));
+    recomputeTotals(state);
+
+    save(state);
+    render(state);
+  }
+
+  // ====== EDITAR / EXCLUIR ======
+  function openEditTaskPrompt(state, taskId) {
+    const t = (state.tasks || []).find(x => x.id === taskId);
+    if (!t) return;
+
+    const name = prompt("Editar nome da missão:", t.name);
+    if (!name || !name.trim()) return;
+
+    const tag = prompt("Editar tag/categoria:", t.tag) || t.tag;
+    const xpStr = prompt("Editar XP (+ inteiro):", String(t.xp));
+    const xp = Number(xpStr);
+    if (!Number.isFinite(xp) || xp < 0) return alert("XP inválido. Use número >= 0.");
+
+    t.name = name.trim();
+    t.tag = tag.trim();
+    t.xp = Math.round(xp);
+    if (!t.approvalMode) t.approvalMode = "auto";
+
+    save(state);
+    render(state);
+  }
+
+  function deleteTask(state, taskId) {
+    const t = (state.tasks || []).find(x => x.id === taskId);
+    if (!t) return;
+
+    const ok = confirm(`Excluir a missão:\n\n"${t.name}"\n\nIsso NÃO apaga histórico antigo. Só remove da lista.`);
+    if (!ok) return;
+
+    state.tasks = (state.tasks || []).filter(x => x.id !== taskId);
+    save(state);
+    render(state);
+  }
+
+  // ====== NAV ======
+  function initNav() {
+    document.querySelectorAll(".nav button").forEach(btn => {
+      btn.onclick = () => setActivePage(btn.dataset.page);
+    });
+  }
+
+  // ====== INIT / EVENTS ======
+  let state = load();
+  if (!state) state = load();
+  state = migrate(state);
+
+  ensureWeekHandling(state);
+  save(state);
+
+  initNav();
+
+  document.getElementById("editNameBtn").onclick = () => {
+    const nome = prompt("Nome do jogador:", state.playerName || "Arthur");
+    if (nome && nome.trim()) { state.playerName = nome.trim(); save(state); render(state); }
+  };
+
+  document.getElementById("toggleParentsBtn").onclick = async () => {
+    if (!state.parentsMode) {
+      const okSetup = await ensurePinSetup(state);
+      if (!okSetup) return;
+
+      const ok = await verifyPin(state);
+      if (!ok) return;
+
+      state.parentsMode = true;
+      save(state);
+      render(state);
+      setActivePage("pageParents");
+      return;
+    }
+
+    state.parentsMode = false;
+    save(state);
+    render(state);
+    showStatus("Modo Pais desligado.");
+  };
+
+  document.getElementById("changePinBtn").onclick = async () => {
+    await changePin(state);
+    render(state);
+  };
+
+  document.getElementById("approvalThreshold").addEventListener("change", (e) => {
+    const v = Number(e.target.value);
+    if (!Number.isFinite(v) || v < 0) return;
+    state.approvalThresholdXP = Math.round(v);
+    save(state);
+    render(state);
+  });
+
+  document.getElementById("pixKey").addEventListener("input", (e) => {
+    state.pixKey = e.target.value;
+    save(state);
+  });
+
+  document.getElementById("addTaskBtn").onclick = () => {
+    const name = prompt("Nome da missão:");
+    if (!name || !name.trim()) return;
+
+    const tag = prompt("Tag/categoria (ex: Casa, Saúde):", "Casa") || "Geral";
+
+    const xpStr = prompt("XP ao concluir (ex: 20):", "20");
+    const xp = Number(xpStr);
+    if (!Number.isFinite(xp) || xp < 0) return alert("XP inválido. Use número >= 0.");
+
+    const kind = prompt("Tipo interno (home/fruit/tooth/water/newfood/mood/outro):", "outro") || "outro";
+
+    state.tasks.push({
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      xp: Math.round(xp),
+      tag: tag.trim(),
+      kind: kind.trim(),
+      approvalMode: "auto"
+    });
+
+    save(state);
+    render(state);
+  };
+
+  document.getElementById("syncTasksBtn").onclick = () => {
+    if (!state.parentsMode) {
+      showStatus("Liga o Modo Pais pra atualizar as missões.", "warn");
+      return;
+    }
+    const ok = confirm("Atualizar lista padrão de missões?\n\n✅ Mantém histórico\n✅ Ajusta XP das antigas\n✅ Adiciona as novas\n\n(Não remove missões personalizadas)");
+    if (!ok) return;
+    syncDefaultTasks(state);
+  };
+
+
+  document.getElementById("approveAllBtn").onclick = () => {
+    const ok = confirm("Aprovar TODAS as pendências?");
+    if (!ok) return;
+    approveAllPending(state);
+    save(state);
+    render(state);
+  };
+
+  document.getElementById("rejectAllBtn").onclick = () => {
+    const ok = confirm("Recusar TODAS as pendências?");
+    if (!ok) return;
+    rejectAllPending(state);
+    save(state);
+    render(state);
+  };
+
+  document.getElementById("cashoutBtn").onclick = () => {
+    ensureWeekHandling(state);
+
+    const now = partsNow();
+    const wkId = weekIdFor(now.iso);
+
+    // Saturday enforcement (fix #4 UX + rules)
+    const weekdayFmt = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday:"short" }).format(new Date());
+    // In JS: Sat is "Sat" in en-US
+    if (weekdayFmt !== "Sat") {
+      showStatus("Hoje não é sábado. O PIX só libera no sábado 😉", "warn");
+      return;
+    }
+
+    const available = computeAvailable(state, wkId);
+    const pay = round2(Math.min(CASHOUT_CAP, available));
+
+    // Settle current week ONCE, storing exact deposit amount, then record cashout
+    if (!state.settledWeekMoney[wkId]) {
+      const weekMoney = round2(moneyFromXP(calcWeekXP(state, wkId)));
+      state.settledWeekMoney[wkId] = weekMoney;
+    }
+
+    if (pay <= 0) {
+      showStatus("Nada disponível pra sacar ainda.", "warn");
+      return;
+    }
+
+    state.cashouts.push({
+      at: new Date().toISOString(),
+      wkId,
+      amount: pay,
+      pixKey: (state.pixKey || "").trim()
+    });
+
+    save(state);
+
+    const key = (state.pixKey || "").trim();
+    const box = document.getElementById("cashoutBox");
+    box.style.display = "block";
+
+    const weekXP = calcWeekXP(state, wkId);
+    const after = round2(computeAvailable(state, wkId)); // after cashout (since saved)
+    box.innerHTML = [
+      `Pedido de PIX — <span class="mono">${wkId.replace("_to_"," → ")}</span>`,
+      `Jogador: <strong>${state.playerName || "Arthur"}</strong>`,
+      `XP aprovado na semana: <strong>${weekXP}</strong>`,
+      `Valor a pagar agora (cap sábado): <strong>R$ ${pay.toFixed(2)}</strong>`,
+      `Saldo que ficou (pra próximo sábado): <strong>R$ ${after.toFixed(2)}</strong>`,
+      `Chave PIX: <span class="mono">${key ? key : "(não informada)"}</span>`,
+      `<div class="muted" style="margin-top:8px">Tu paga esse valor no teu banco. O app só registra o pedido.</div>`
+    ].join("<br/>");
+
+    box.innerHTML += generateWeeklyStatementHTML(state, wkId);
+
+    render(state);
+    showStatus("Pedido de PIX gerado ✅");
+    setActivePage("pagePix");
+  };
+
+  document.getElementById("resetBtn").onclick = () => {
+    const ok = confirm("Tem certeza? Isso apaga tudo (tarefas, histórico, XP, medalhas, saldo e PIN).");
+    if (!ok) return;
+    localStorage.removeItem(KEY);
+    state = load();
+    state = migrate(state);
+    ensureWeekHandling(state);
+    save(state);
+    render(state);
+    showStatus("Reset feito. Começou do zero ✅");
+  };
+
+
+  // ====== PWA: Install prompt + Service Worker ======
+  let deferredInstall = null;
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstall = e;
+
+    const box = document.getElementById("installBox");
+    const hint = document.getElementById("installHint");
+    if (box && hint) {
+      box.style.display = "block";
+      hint.textContent = "Dica: depois de instalar, ele abre sem barra do navegador.";
+    }
+  });
+
+  window.addEventListener("appinstalled", () => {
+    const box = document.getElementById("installBox");
+    if (box) box.style.display = "none";
+    showStatus("Instalado na tela inicial ✅");
+    deferredInstall = null;
+  });
+
+  // iOS doesn't fire beforeinstallprompt; show hint instead
+  function isIOS(){
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+  function isInStandalone(){
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  }
+
+  const installBtn = document.getElementById("installBtn");
+  if (installBtn) {
+    installBtn.onclick = async () => {
+      if (deferredInstall) {
+        deferredInstall.prompt();
+        const choice = await deferredInstall.userChoice;
+        if (choice?.outcome !== "accepted") showStatus("Instalação cancelada.", "warn");
+        deferredInstall = null;
+      } else {
+        // iOS guidance
+        if (isIOS() && !isInStandalone()) {
+          const hint = document.getElementById("installHint");
+          if (hint) hint.textContent = "No iPhone: toca em Compartilhar → 'Adicionar à Tela de Início'.";
+          showStatus("No iPhone é pelo menu de Compartilhar.", "warn");
+        } else {
+          showStatus("Se não apareceu o botão, abre no Chrome e usa 'Instalar app'.", "warn");
+        }
+      }
+    };
+  }
+
+  // Register SW (needs https or localhost)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+  }
+
+  // ====== INIT ======
+  render(state);
+})();
+</script>
+</body>
+</html>
